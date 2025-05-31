@@ -1,110 +1,105 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  Image,
+  FlatList,
+  TouchableOpacity,
+  ScrollView,
+  Linking,
+  StatusBar,
+  ActivityIndicator,
+} from 'react-native';
+import axios from 'axios';
+import tw from 'twrnc';
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+type NewsArticle = {
+  source: { name: string };
+  author: string;
+  title: string;
+  description: string;
+  url: string;
+  urlToImage: string;
+  publishedAt: string;
+  content: string;
+};
 
-export default function TabTwoScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+const NewsApp = () => {
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const getNews = async () => {
+    try {
+      const response = await axios.get(
+        'https://newsapi.org/v2/top-headlines?sources=bbc-news&apiKey=4f6a3598b13e40c59810091e00d1ac36'
+      );
+      setArticles(response.data.articles);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getNews();
+  }, []);
+
+  // Komponen kartu berita dengan desain profesional
+  const NewsCard = ({ article }: { article: NewsArticle }) => {
+    return (
+    <TouchableOpacity style={tw`mb-6 bg-white rounded-xl shadow-lg overflow-hidden`}>
+  <Image source={{ uri: article.urlToImage }} style={tw`w-full h-60`} />
+  <View style={tw`absolute top-0 left-0 bg-black bg-opacity-50 px-3 py-1 rounded-br-xl`}>
+    <Text style={tw`text-white text-xs`}>{article.source.name}</Text>
+  </View>
+
+  <View style={tw`p-4`}>
+    <Text style={tw`text-xl font-bold text-gray-900 mb-1`} numberOfLines={2}>{article.title}</Text>
+    <Text style={tw`text-sm text-gray-600 mb-3`} numberOfLines={3}>{article.description}</Text>
+    
+    <View style={tw`flex-row justify-between items-center`}>
+      <Text style={tw`text-xs italic text-gray-500`}>By {article.author || 'Unknown'}</Text>
+      <TouchableOpacity
+        onPress={() => Linking.openURL(article.url)}
+        style={tw`bg-red-500 px-4 py-1 rounded-full`}
+      >
+        <Text style={tw`text-white text-sm`}>Read More</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</TouchableOpacity>
+
+    );
+  };
+
+  // Header aplikasi
+  const Header = () => (
+    <View style={tw`bg-white shadow-sm px-5 pt-10 pb-6`}>
+      <Text style={tw`text-3xl font-extrabold text-gray-900`}>KaiserNews</Text>
+      <Text style={tw`text-base text-gray-500`}>Trusted Global Source</Text>
+    </View>
   );
-}
 
-const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-});
+  return (
+    <View style={tw`flex-1 bg-gray-100`}>
+      <StatusBar barStyle="dark-content" />
+      <Header />
+      {loading ? (
+        <View style={tw`flex-1 justify-center items-center`}>
+          <ActivityIndicator size="large" color="#EF4444" />
+        </View>
+      ) : (
+        <FlatList
+          data={articles}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => <NewsCard article={item} />}
+          contentContainerStyle={tw`px-5 py-6`}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+    </View>
+  );
+};
+
+export default NewsApp;
